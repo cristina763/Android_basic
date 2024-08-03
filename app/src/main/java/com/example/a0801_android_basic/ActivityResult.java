@@ -2,29 +2,32 @@ package com.example.a0801_android_basic;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
+import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class ActivityResult extends AppCompatActivity {
 
+    TextView textViewName, textViewBmi, textViewBmr;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_result);
 
-        Button buttonSubmit = findViewById(R.id.buttonSubmit);
+        textViewName = findViewById(R.id.textViewName);
+        textViewBmi = findViewById(R.id.textViewBmi);
+        textViewBmr = findViewById(R.id.textViewBmr);
 
-        buttonSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent it = new Intent();
-                it.setClass(ActivityResult.this, MainActivity.class);
-                startActivity(it);
-            }
-        });
+        // 獲取 Intent 並讀取數據
+        Intent intent = getIntent();
+        String name = intent.getStringExtra("name");
+        String bmi = intent.getStringExtra("bmi");
+        String bmr = intent.getStringExtra("bmr");
+
+        // 顯示數據
+        textViewName.setText("Name: " + name);
+        textViewBmi.setText("BMI: " + bmi);
+        textViewBmr.setText("BMR: " + bmr);
     }
 }

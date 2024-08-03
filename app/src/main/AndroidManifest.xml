@@ -27,6 +27,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".ActivityCreate" />
+        <activity android:name=".ActivityResult" />
+        <activity android:name=".ActivityUpdate" />
 
         <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 

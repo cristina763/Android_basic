@@ -1,115 +1,137 @@
 package com.example.a0801_android_basic;
 
+import android.app.Instrumentation;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.Spinner;
-
+import android.widget.Toast;
+import org.json.JSONObject;
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.json.JSONObject;
-
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class ActivityCreate extends AppCompatActivity {
-    private static final int PERMISSION_REQUEST_CODE = 1;
-
-    private EditText editTextName, editTextHeight, editTextWeight, editTextAge;
+    ListView listView;
+    Button button;
+    EditText editTextName, editTextAge, editTextHeight, editTextWeight;
     private Spinner spinnerGender;
+    ArrayList<String> dataList = new ArrayList<>();
+    ArrayAdapter<String> adapter;
 
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create);
 
+        // 找到視圖的元件並連接
+        button = findViewById(R.id.buttonSubmit);
+        listView = findViewById(R.id.listView);
         editTextName = findViewById(R.id.editTextName);
         spinnerGender = findViewById(R.id.spinnerGender);
         editTextAge = findViewById(R.id.editTextAge);
         editTextHeight = findViewById(R.id.editTextHeight);
         editTextWeight = findViewById(R.id.editTextWeight);
 
-        Button buttonSubmit = findViewById(R.id.buttonSubmit);
-
-        // 性別
         ArrayAdapter<CharSequence> genderAdapter = ArrayAdapter.createFromResource(this,
                 R.array.gender_array, android.R.layout.simple_spinner_item);
         genderAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerGender.setAdapter(genderAdapter);
 
-        buttonSubmit.setOnClickListener(new View.OnClickListener() {
+        // 初始化適配器
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, dataList);
+        listView.setAdapter(adapter);
+
+        // 宣告按鈕的監聽器監聽按鈕是否被按下
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                String name = editTextName.getText().toString();
-                String gender = spinnerGender.getSelectedItem().toString();
-                String age = editTextAge.getText().toString();
-                String height = editTextHeight.getText().toString();
-                String weight = editTextWeight.getText().toString();
-
-                JSONObject postData = new JSONObject();
-                try {
-                    postData.put("name", name);
-                    postData.put("gender", gender);
-                    postData.put("age", age);
-                    postData.put("height", height);
-                    postData.put("weight", weight);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                new SendDataToServer().execute(postData.toString());
-
-                Intent intent = new Intent(ActivityCreate.this, MainActivity.class);
-                startActivity(intent);
+            public void onClick(View view) {
+                // 按下之後會執行的程式碼
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        submitData();
+                    }
+                }).start();
             }
         });
     }
 
-    private class SendDataToServer extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... params) {
-            String jsonResponse = "";
-            String jsonData = params[0];
-            HttpURLConnection urlConnection = null;
+    // 提交資料到伺服器
+    private void submitData() {
+        try {
+            String name = editTextName.getText().toString();
+            String gender = spinnerGender.getSelectedItem().toString();
+            String age = editTextAge.getText().toString();
+            String height = editTextHeight.getText().toString();
+            String weight = editTextWeight.getText().toString();
 
-            try {
-                URL url = new URL("http://192.168.1.109/android_basic.php");
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setDoOutput(true);
-                urlConnection.setRequestMethod("POST");
-                urlConnection.setRequestProperty("Content-Type", "application/json");
+            URL url = new URL("http://192.168.0.10/android_create.php");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
 
-                OutputStream os = urlConnection.getOutputStream();
-                os.write(jsonData.getBytes("UTF-8"));
-                os.close();
+            String postData = "name=" + name + "&gender=" + gender + "&age=" + age + "&height=" + height + "&weight=" + weight;
 
-                int responseCode = urlConnection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    jsonResponse = "Data sent successfully";
-                } else {
-                    jsonResponse = "Failed to send data";
+            OutputStream os = connection.getOutputStream();
+            os.write(postData.getBytes());
+            os.flush();
+            os.close();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                InputStream inputStream = connection.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                jsonResponse = "Exception occurred";
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
+                reader.close();
+                inputStream.close();
+
+                String result = response.toString();
+                JSONObject jsonObject = new JSONObject(result);
+
+                if (jsonObject.has("error")) {
+                    final String errorMessage = jsonObject.getString("error");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(ActivityCreate.this, errorMessage, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else {
+                    final String nameResult = jsonObject.getString("name");
+                    final String bmiResult = jsonObject.getString("bmi");
+                    final String bmrResult = jsonObject.getString("bmr");
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // 啟動新的 Activity 並傳遞數據
+                            Intent intent = new Intent(ActivityCreate.this, ActivityResult.class);
+                            intent.putExtra("name", nameResult);
+                            intent.putExtra("bmi", bmiResult);
+                            intent.putExtra("bmr", bmrResult);
+                            startActivity(intent);
+                        }
+                    });
                 }
             }
-
-            return jsonResponse;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            // 您可以在此處處理結果，例如顯示通知或進行其他操作
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
