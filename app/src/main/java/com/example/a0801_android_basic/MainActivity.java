@@ -3,14 +3,13 @@ package com.example.a0801_android_basic;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import org.json.JSONObject;
+
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -24,23 +23,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-import android.os.Bundle;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     ListView listView;
@@ -49,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> dataList = new ArrayList<>(); // 儲存資料的列表
     ArrayAdapter<String> adapter; // 列表適配器
     ArrayList<JSONObject> dataObjects = new ArrayList<>(); // 儲存完整數據的列表
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
         listView.setOnItemClickListener((parent, view, position, id) -> {
             JSONObject selectedItem = dataObjects.get(position);
             Intent intent = new Intent(MainActivity.this, ActivityUpdate.class);
@@ -133,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
         try {
             // 假設伺服器返回的是 JSON 數組
             JSONArray jsonArray = new JSONArray(result);
-
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 dataObjects.add(jsonObject); // 保存完整的 JSON 數據

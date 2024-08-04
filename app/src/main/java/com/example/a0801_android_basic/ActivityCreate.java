@@ -3,6 +3,7 @@ package com.example.a0801_android_basic;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -129,9 +130,12 @@ public class ActivityCreate extends AppCompatActivity {
                         }
                     });
                 }
+            } else {
+                Log.e("HTTP Error", "Response code: " + responseCode);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e("Submit Data Error", e.toString());
         }
     }
 }
