@@ -10,11 +10,10 @@
         android:layout_height="wrap_content"
         android:hint="Name" />
 
-    <EditText
-        android:id="@+id/editTextGender"
+    <Spinner
+        android:id="@+id/spinnerGender"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Gender" />
+        android:layout_height="wrap_content" />
 
     <EditText
         android:id="@+id/editTextAge"

@@ -76,7 +76,7 @@ public class ActivityCreate extends AppCompatActivity {
             String height = editTextHeight.getText().toString();
             String weight = editTextWeight.getText().toString();
 
-            URL url = new URL("http://192.168.0.10/android_create.php");
+            URL url = new URL("http://192.168.43.183/android_create.php");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);

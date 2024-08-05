@@ -5,16 +5,14 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -22,9 +20,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     ListView listView;
@@ -34,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<String> adapter; // 列表適配器
     ArrayList<JSONObject> dataObjects = new ArrayList<>(); // 儲存完整數據的列表
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
         Button button = findViewById(R.id.buttonSubmit);
 
         // 找到視圖的元件並連接
-        //button = findViewById(R.id.buttonSubmit);
         listView = findViewById(R.id.listView);
 
         // 初始化適配器
@@ -56,28 +49,28 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //writeDataToExcel();
                 Intent intent = new Intent(MainActivity.this, ActivityCreate.class);
                 startActivity(intent);
             }
         });
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            JSONObject selectedItem = dataObjects.get(position);
-            Intent intent = new Intent(MainActivity.this, ActivityUpdate.class);
-            intent.putExtra("data", selectedItem.toString());
-            startActivity(intent);
-        });
 
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            showOptionsDialog(position);
+        });
     }
 
-    /* ======================================== */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 當 MainActivity 恢復時自動刷新資料
+        Thread thread = new Thread(mutiThread);
+        thread.start();
+    }
 
-    // 建立一個執行緒執行的事件取得網路資料
     private Runnable mutiThread = new Runnable(){
-        public void run()
-        {
+        public void run() {
             try {
-                URL url = new URL("http://192.168.0.10/android_basic.php");
+                URL url = new URL("http://192.168.43.183/android_basic.php");
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
@@ -109,13 +102,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // 更新 ListView 的方法
     private void updateListView(String result) {
         dataList.clear(); // 清空現有資料
         dataObjects.clear(); // 清空完整數據列表
 
         try {
-            // 假設伺服器返回的是 JSON 數組
             JSONArray jsonArray = new JSONArray(result);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -132,4 +123,58 @@ public class MainActivity extends AppCompatActivity {
 
         adapter.notifyDataSetChanged(); // 通知適配器資料已變更
     }
+    private void showOptionsDialog(int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Choose Update or Delete")
+                .setItems(new String[]{"Update", "Delete"}, (dialog, which) -> {
+                    switch (which) {
+                        case 0:
+                            // 更新
+                            JSONObject selectedItem = dataObjects.get(position);
+                            Intent intent = new Intent(MainActivity.this, ActivityUpdate.class);
+                            intent.putExtra("data", selectedItem.toString());
+                            startActivity(intent);
+                            break;
+                        case 1:
+                            // 刪除
+                            deleteItem(position);
+                            break;
+                    }
+                });
+        builder.create().show();
+    }
+
+    private void deleteItem(int position) {
+        JSONObject selectedItem = dataObjects.get(position);
+        String id;
+        try {
+            id = selectedItem.getString("id");
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return; // 如果获取 id 失败，直接返回
+        }
+
+        // 發送刪除請求
+        Thread thread = new Thread(() -> {
+            try {
+                URL url = new URL("http://192.168.43.183/android_delete.php?id=" + id);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.connect();
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    runOnUiThread(() -> {
+                        dataList.remove(position);
+                        dataObjects.remove(position);
+                        adapter.notifyDataSetChanged();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        thread.start();
+    }
 }
+
