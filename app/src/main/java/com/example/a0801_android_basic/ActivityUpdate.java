@@ -81,7 +81,7 @@ public class ActivityUpdate extends AppCompatActivity {
     private void updateData() {
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("id", id); // 确保包含 ID 参数
+            jsonObject.put("id", id);
             jsonObject.put("name", editTextName.getText().toString());
             jsonObject.put("gender", spinnerGender.getSelectedItem().toString());
             jsonObject.put("age", editTextAge.getText().toString());
@@ -101,7 +101,6 @@ public class ActivityUpdate extends AppCompatActivity {
                 connection.setUseCaches(false);
                 connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
-                // 发送请求
                 OutputStream os = connection.getOutputStream();
                 String postData = "id=" + id +
                         "&name=" + URLEncoder.encode(editTextName.getText().toString(), "UTF-8") +

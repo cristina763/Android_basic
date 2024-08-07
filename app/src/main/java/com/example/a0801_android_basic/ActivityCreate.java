@@ -52,11 +52,9 @@ public class ActivityCreate extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, dataList);
         listView.setAdapter(adapter);
 
-        // 宣告按鈕的監聽器監聽按鈕是否被按下
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // 按下之後會執行的程式碼
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -67,7 +65,6 @@ public class ActivityCreate extends AppCompatActivity {
         });
     }
 
-    // 提交資料到伺服器
     private void submitData() {
         try {
             String name = editTextName.getText().toString();

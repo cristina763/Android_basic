@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // 當 MainActivity 恢復時自動刷新資料
+        // 自動刷新資料
         Thread thread = new Thread(mutiThread);
         thread.start();
     }
@@ -151,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
             id = selectedItem.getString("id");
         } catch (JSONException e) {
             e.printStackTrace();
-            return; // 如果获取 id 失败，直接返回
+            return;
         }
 
         // 發送刪除請求
